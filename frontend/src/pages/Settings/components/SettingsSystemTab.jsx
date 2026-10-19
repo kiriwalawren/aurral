@@ -15,9 +15,13 @@ export function SettingsSystemTab({ health, settings, updateSettings, showSucces
   const queryClient = useQueryClient();
   const apiKeyQuery = useQuery({
     queryKey: queryKeys.apiKey,
-    queryFn: async ({ signal }) => (await getApiKey({ signal }))?.apiKey || null,
+    queryFn: async ({ signal }) => {
+      const res = await getApiKey({ signal });
+      return { apiKey: res?.apiKey || null, managedByEnv: res?.managedByEnv === true };
+    },
   });
-  const apiKey = apiKeyQuery.data ?? null;
+  const apiKey = apiKeyQuery.data?.apiKey ?? null;
+  const managedByEnv = apiKeyQuery.data?.managedByEnv === true;
   const loading = apiKeyQuery.isPending;
   const [rotating, setRotating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -41,7 +45,10 @@ export function SettingsSystemTab({ health, settings, updateSettings, showSucces
     setRotating(true);
     try {
       const res = await rotateApiKey();
-      queryClient.setQueryData(queryKeys.apiKey, res?.apiKey || null);
+      queryClient.setQueryData(queryKeys.apiKey, {
+        apiKey: res?.apiKey || null,
+        managedByEnv: false,
+      });
       showSuccess("API key rotated");
     } catch {
       showError("Failed to rotate API key");
@@ -143,7 +150,16 @@ export function SettingsSystemTab({ health, settings, updateSettings, showSucces
             <div className="settings-system__row">
               <div className="settings-system__copy">
                 <div className="settings-system__label">API key</div>
-                <p className="settings-system__description">Keep this key private.</p>
+                <p className="settings-system__description">
+                  {managedByEnv ? (
+                    <>
+                      Set by the <code>AURRAL_API_KEY</code> environment variable. Keep this key
+                      private.
+                    </>
+                  ) : (
+                    "Keep this key private."
+                  )}
+                </p>
               </div>
               <div className="settings-system__api-value">
                 <Tooltip content="API key">
@@ -165,21 +181,23 @@ export function SettingsSystemTab({ health, settings, updateSettings, showSucces
                     )}
                   </button>
                 </Tooltip>
-                <Tooltip content="Rotate API key">
-                  <button
-                    type="button"
-                    className="arr-btn arr-btn--ghost arr-btn--icon"
-                    onClick={handleRotate}
-                    disabled={rotating}
-                    aria-label="Rotate API key"
-                  >
-                    {rotating ? (
-                      <DotLoader size="xs" label={null} />
-                    ) : (
-                      <RotateCcw className="artist-icon-xs" aria-hidden />
-                    )}
-                  </button>
-                </Tooltip>
+                {!managedByEnv && (
+                  <Tooltip content="Rotate API key">
+                    <button
+                      type="button"
+                      className="arr-btn arr-btn--ghost arr-btn--icon"
+                      onClick={handleRotate}
+                      disabled={rotating}
+                      aria-label="Rotate API key"
+                    >
+                      {rotating ? (
+                        <DotLoader size="xs" label={null} />
+                      ) : (
+                        <RotateCcw className="artist-icon-xs" aria-hidden />
+                      )}
+                    </button>
+                  </Tooltip>
+                )}
               </div>
             </div>
           ) : (

@@ -7,7 +7,7 @@ import {
   touchReauth,
 } from "../config/session-helpers.js";
 import { requireAdmin, requireAuth, requireRecentAuth } from "../middleware/requirePermission.js";
-import { getApiKey, rotateApiKey } from "../middleware/auth.js";
+import { getApiKey, isApiKeyManagedByEnv, rotateApiKey } from "../middleware/auth.js";
 import { hashPassword, verifyPassword, needsRehash } from "../middleware/passwordHash.js";
 import { clearOidcTransactionCookie, exchangeOidcCallback, startOidcLogin } from "../services/oidcAuth.js";
 import {
@@ -119,7 +119,7 @@ router.post("/reauth", requireAuth, (req, res) => {
 });
 
 router.get("/api-key", requireAuth, requireAdmin, (req, res) => {
-  res.json({ apiKey: getApiKey() });
+  res.json({ apiKey: getApiKey(), managedByEnv: isApiKeyManagedByEnv() });
 });
 
 router.post("/api-key/rotate", requireAuth, requireAdmin, (req, res) => {

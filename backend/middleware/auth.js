@@ -54,11 +54,29 @@ export const getAuthPassword = () => {
 };
 
 const API_KEY_SETTINGS_KEY = "apiKey";
+const API_KEY_ENV_VAR = "AURRAL_API_KEY";
+export const API_KEY_MIN_LENGTH = 32;
+
+export const isEnvApiKeyTooShort = () => {
+  const raw = String(process.env[API_KEY_ENV_VAR] || "").trim();
+  return raw.length > 0 && raw.length < API_KEY_MIN_LENGTH;
+};
+
+const getEnvApiKey = () => {
+  const raw = String(process.env[API_KEY_ENV_VAR] || "").trim();
+  return raw.length >= API_KEY_MIN_LENGTH ? raw : null;
+};
+
+export const isApiKeyManagedByEnv = () => getEnvApiKey() !== null;
 
 export const getApiKey = () => {
+  const envKey = getEnvApiKey();
+  if (envKey) return envKey;
   const settings = dbOps.getSettings();
   const existing = settings.integrations?.general?.[API_KEY_SETTINGS_KEY];
-  if (existing && typeof existing === "string" && existing.length >= 32) return existing;
+  if (existing && typeof existing === "string" && existing.length >= API_KEY_MIN_LENGTH) {
+    return existing;
+  }
   const key = crypto.randomBytes(32).toString("hex");
   const next = {
     ...settings,

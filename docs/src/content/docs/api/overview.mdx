@@ -40,6 +40,8 @@ The key belongs to the Aurral installation, not to a user. For actions on user d
 
 Keep the key in a secret store. If an integration only needs to read, send only `GET` requests. To replace the key, select **Rotate API key** in **Settings > System**. The old key stops working at once.
 
+To choose the key yourself, set the `AURRAL_API_KEY` [environment variable](/admin/environment/#authentication) to a value of at least 32 characters, for example the output of `openssl rand -hex 32`. **Settings > System** hides **Rotate API key**. To replace the key, change the variable and restart Aurral.
+
 Do not put the key in public browser JavaScript. Call Aurral from a server-side widget or a same-origin proxy instead.
 
 ## Useful read endpoints

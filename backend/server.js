@@ -10,7 +10,12 @@ import dns from "node:dns";
 
 dns.setDefaultResultOrder("ipv4first");
 
-import { authMiddleware, isProxyAuthEnabled } from "./middleware/auth.js";
+import {
+  API_KEY_MIN_LENGTH,
+  authMiddleware,
+  isEnvApiKeyTooShort,
+  isProxyAuthEnabled,
+} from "./middleware/auth.js";
 import { createRequestFailureLogger } from "./middleware/requestFailureLogger.js";
 import { handleOidcCallback, isOidcEnabled } from "./services/oidcAuth.js";
 import { handleGoogleCallback } from "./services/googleAuth.js";
@@ -110,6 +115,15 @@ if (isProxyAuthEnabled() && !process.env.AUTH_PROXY_TRUSTED_IPS) {
       "this server directly can impersonate any user via the proxy identity header. Set " +
       "AUTH_PROXY_TRUSTED_IPS to your reverse proxy's address to restrict this.",
   );
+}
+
+if (isEnvApiKeyTooShort()) {
+  logger.error(
+    "system",
+    `AURRAL_API_KEY must be at least ${API_KEY_MIN_LENGTH} characters. ` +
+      "Set a longer key, for example the output of `openssl rand -hex 32`, or unset it.",
+  );
+  process.exit(1);
 }
 
 if (process.env.OIDC_ENABLED === "true" && !isOidcEnabled()) {
